@@ -3,14 +3,22 @@ name = "rusty_os"
 version = "0.1.0"
 edition = "2018"
 
-[profile.dev]
-panic = "abort"
+[package.metadata.bootimage]
+test-args = ["-device", "isa-debug-exit,iobase=0xf4,iosize=0x04", "-serial", "stdio", "-display", "none"]
+test-success-exit-code = 33
+test-timeout = 300
 
 [profile.release]
 panic = "abort"
+
+[[test]]
+name = "should_panic"
+harness = false
 
 [dependencies]
 bootloader = "0.9.0"
 lazy_static = { version = "1.0", features = ["spin_no_std"] }
 spin = "0.9.8"
+uart_16550 = "0.3.2"
 volatile = "0.2.6"
+x86_64 = "0.15.2"
