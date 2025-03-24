@@ -15,9 +15,15 @@ panic = "abort"
 name = "should_panic"
 harness = false
 
+[[test]]
+name = "stack_overflow"
+harness = false
+
 [dependencies]
 bootloader = "0.9.0"
 lazy_static = { version = "1.0", features = ["spin_no_std"] }
+pc-keyboard = "0.8.0"
+pic8259 = "0.11.0"
 spin = "0.9.8"
 uart_16550 = "0.3.2"
 volatile = "0.2.6"

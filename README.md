@@ -7,7 +7,10 @@ A basic operating system made in rust
 ## Features
 
 - VGA text output
-
+- Serial
+- CPU Exception Catching
+- Hardware Interrupts
+- PS/2 Keyboard
 
 ## Building and running locally
 

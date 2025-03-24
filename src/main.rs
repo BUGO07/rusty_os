@@ -5,23 +5,25 @@
 #![reexport_test_harness_main = "test_main"]
 
 use core::panic::PanicInfo;
-use rusty_os::println;
+use rusty_os::{print, println};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     println!("Hello World{}", "!");
+    rusty_os::init();
 
     #[cfg(test)]
     test_main();
 
-    loop {}
+    println!("It did not crash!");
+    rusty_os::hlt_loop();
 }
 
 #[cfg(not(test))]
 #[panic_handler]
 fn panic(info: &PanicInfo) -> ! {
     println!("{}", info);
-    loop {}
+    rusty_os::hlt_loop();
 }
 
 #[cfg(test)]
