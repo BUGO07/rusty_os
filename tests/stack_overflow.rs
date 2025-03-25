@@ -3,18 +3,15 @@
 #![feature(abi_x86_interrupt)]
 
 use core::panic::PanicInfo;
-
 use lazy_static::lazy_static;
-use rusty_os::serial_print;
-use rusty_os::{exit_qemu, serial_println, QemuExitCode};
-use x86_64::structures::idt::InterruptDescriptorTable;
-use x86_64::structures::idt::InterruptStackFrame;
+use rusty_os::{exit_qemu, serial_print, serial_println, QemuExitCode};
+use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
 
 #[no_mangle]
 pub extern "C" fn _start() -> ! {
     serial_print!("stack_overflow::stack_overflow...\t");
 
-    rusty_os::gdt::init();
+    rusty_os::arch::gdt::init();
     init_test_idt();
 
     stack_overflow();
@@ -42,7 +39,7 @@ lazy_static! {
         unsafe {
             idt.double_fault
                 .set_handler_fn(test_double_fault_handler)
-                .set_stack_index(rusty_os::gdt::DOUBLE_FAULT_IST_INDEX);
+                .set_stack_index(rusty_os::arch::gdt::DOUBLE_FAULT_IST_INDEX);
         }
 
         idt

@@ -9,15 +9,16 @@ extern crate alloc;
 use alloc::{boxed::Box, vec::Vec};
 use bootloader::{entry_point, BootInfo};
 use core::panic::PanicInfo;
-use rusty_os::allocator::HEAP_SIZE;
+use rusty_os::memory::{
+    self,
+    allocator::{self, HEAP_SIZE},
+    BootInfoFrameAllocator,
+};
+use x86_64::VirtAddr;
 
 entry_point!(main);
 
 fn main(boot_info: &'static BootInfo) -> ! {
-    use rusty_os::allocator;
-    use rusty_os::memory::{self, BootInfoFrameAllocator};
-    use x86_64::VirtAddr;
-
     rusty_os::init();
     let phys_mem_offset = VirtAddr::new(boot_info.physical_memory_offset);
     let mut mapper = unsafe { memory::init(phys_mem_offset) };
@@ -53,8 +54,10 @@ fn large_vec() {
 
 #[test_case]
 fn many_boxes() {
+    let long_lived = Box::new(1);
     for i in 0..HEAP_SIZE {
         let x = Box::new(i);
         assert_eq!(*x, i);
     }
+    assert_eq!(*long_lived, 1);
 }

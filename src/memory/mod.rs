@@ -1,8 +1,13 @@
 use bootloader::bootinfo::{MemoryMap, MemoryRegionType};
 use x86_64::{
-    structures::paging::{FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB},
+    registers::control::Cr3,
+    structures::paging::{
+        page_table::FrameError, FrameAllocator, OffsetPageTable, PageTable, PhysFrame, Size4KiB,
+    },
     PhysAddr, VirtAddr,
 };
+
+pub mod allocator;
 
 pub struct EmptyFrameAllocator;
 
@@ -57,9 +62,6 @@ pub unsafe fn translate_addr(addr: VirtAddr, physical_memory_offset: VirtAddr) -
 }
 
 fn translate_addr_inner(addr: VirtAddr, physical_memory_offset: VirtAddr) -> Option<PhysAddr> {
-    use x86_64::registers::control::Cr3;
-    use x86_64::structures::paging::page_table::FrameError;
-
     let (level_4_table_frame, _) = Cr3::read();
 
     let table_indexes = [
