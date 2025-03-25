@@ -11,6 +11,8 @@ A basic operating system made in rust
 - CPU Exception Catching
 - Hardware Interrupts
 - PS/2 Keyboard
+- Paging
+- Heap
 
 ## Building and running locally
 

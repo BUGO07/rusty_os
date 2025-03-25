@@ -1,8 +1,11 @@
-use crate::{gdt, print, println};
+use crate::{gdt, hlt_loop, print, println};
 use lazy_static::lazy_static;
 use pic8259::ChainedPics;
 use spin;
-use x86_64::structures::idt::{InterruptDescriptorTable, InterruptStackFrame};
+use x86_64::{
+    registers::control::Cr2,
+    structures::idt::{InterruptDescriptorTable, InterruptStackFrame, PageFaultErrorCode},
+};
 
 pub const PIC_1_OFFSET: u8 = 32;
 pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
@@ -12,16 +15,6 @@ pub const PIC_2_OFFSET: u8 = PIC_1_OFFSET + 8;
 pub enum InterruptIndex {
     Timer = PIC_1_OFFSET,
     Keyboard,
-}
-
-impl InterruptIndex {
-    fn as_u8(self) -> u8 {
-        self as u8
-    }
-
-    fn as_usize(self) -> usize {
-        usize::from(self.as_u8())
-    }
 }
 
 pub static PICS: spin::Mutex<ChainedPics> =
@@ -36,8 +29,9 @@ lazy_static! {
                 .set_handler_fn(double_fault_handler)
                 .set_stack_index(gdt::DOUBLE_FAULT_IST_INDEX);
         }
-        idt[InterruptIndex::Timer.as_u8()].set_handler_fn(timer_interrupt_handler);
-        idt[InterruptIndex::Keyboard.as_u8()].set_handler_fn(keyboard_interrupt_handler);
+        idt[InterruptIndex::Timer as u8].set_handler_fn(timer_interrupt_handler);
+        idt[InterruptIndex::Keyboard as u8].set_handler_fn(keyboard_interrupt_handler);
+        idt.page_fault.set_handler_fn(page_fault_handler);
         idt
     };
 }
@@ -61,7 +55,7 @@ extern "x86-interrupt" fn timer_interrupt_handler(_stack_frame: InterruptStackFr
     print!(".");
     unsafe {
         PICS.lock()
-            .notify_end_of_interrupt(InterruptIndex::Timer.as_u8());
+            .notify_end_of_interrupt(InterruptIndex::Timer as u8);
     }
 }
 
@@ -94,8 +88,19 @@ extern "x86-interrupt" fn keyboard_interrupt_handler(_stack_frame: InterruptStac
 
     unsafe {
         PICS.lock()
-            .notify_end_of_interrupt(InterruptIndex::Keyboard.as_u8());
+            .notify_end_of_interrupt(InterruptIndex::Keyboard as u8);
     }
+}
+
+extern "x86-interrupt" fn page_fault_handler(
+    stack_frame: InterruptStackFrame,
+    error_code: PageFaultErrorCode,
+) {
+    println!("EXCEPTION: PAGE FAULT");
+    println!("Accessed Address: {:?}", Cr2::read());
+    println!("Error Code: {:?}", error_code);
+    println!("{:#?}", stack_frame);
+    hlt_loop();
 }
 
 #[test_case]
